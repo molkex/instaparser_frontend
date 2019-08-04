@@ -136,7 +136,7 @@ class App extends React.Component {
           .then(result => {
             const loginResult = result.success;
             if (loginResult) {
-              //location.href = "/admin";
+              location.href = "/admin";
             } else {
               this.setState({ error: "Неправильный логин или пароль" });
             }
