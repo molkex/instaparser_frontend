@@ -69,5 +69,5 @@ app.use((req, res, next) => {
 });
 
 app.get("/api/samefollowers/id1365136316", function(req, res) {
-  res.json([{ name: "somename1" }, { name: "somename2" }]);
+  res.json([{ username: "somename1" }, { username: "somename2" }]);
 });
