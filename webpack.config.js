@@ -20,6 +20,12 @@ module.exports = {
     extensions: [".js", ".jsx", ".json"]
   },
 
+  optimization: {
+    splitChunks: {
+      chunks: "all"
+    }
+  },
+
   module: {
     rules: [
       {
@@ -75,17 +81,15 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ["style-loader", "css-loader"]
+      },
+      {
+        loader: "webpack-ant-icon-loader",
+        enforce: "pre",
+        options: {
+          chunkName: "antd-icons"
+        },
+        include: [require.resolve("@ant-design/icons/lib/dist")]
       }
-      // {
-      //   loader:'webpack-ant-icon-loader',
-      //   enforce: 'pre',
-      //   // options:{
-      //   //   chunkName:'antd-icons'
-      //   // },
-      //   include:[
-      //     require.resolve('@ant-design/icons/lib/dist')
-      //   ]
-      // }
     ]
   },
 
