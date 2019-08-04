@@ -5,7 +5,11 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
 
 module.exports = {
-  entry: { main: "./src/site/entry.js", admin: "./src/admin/entry.js" },
+  entry: {
+    main: "./src/site/entry.js",
+    admin: "./src/admin/entry.js",
+    login: "./src/login/entry.js"
+  },
 
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -71,7 +75,7 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ["style-loader", "css-loader"]
-      },
+      }
       // {
       //   loader:'webpack-ant-icon-loader',
       //   enforce: 'pre',
@@ -102,7 +106,12 @@ module.exports = {
       filename: "admin.html",
       chunks: ["admin"]
     }),
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new HtmlWebpackPlugin({
+      template: "./login.html",
+      filename: "login.html",
+      chunks: ["login"]
+    }),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
     //new BundleAnalyzerPlugin()
   ]
 };
