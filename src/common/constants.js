@@ -1,8 +1,10 @@
 const port = 3000;
-//export const prefix = `http://5.189.102.24`;
-export const prefix = `http://localhost:${port}`;
+export const prefix = `http://5.189.102.24`;
+//export const prefix = `http://localhost:${port}`;
 export const apiPrefix = prefix + "/api";
 export const socketAddress = prefix;
+
+export const instagramUrl = "https://instagram.com";
 
 export const socketActions = {
   search: "search",
@@ -12,7 +14,7 @@ export const socketActions = {
 };
 
 export const errorTypes = {
-  userNotFound: "userNotFound",
-  userPrivate: "userPrivate",
-  userTooManyFollowers: "userTooManyFollowers"
+  userNotFound: "UserNotFound",
+  userPrivate: "UserIsPrivate",
+  userTooManyFollowers: "UserTooManyFollowers"
 };

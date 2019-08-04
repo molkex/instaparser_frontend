@@ -1,23 +1,19 @@
 import { hot } from "react-hot-loader/root";
 import React from "react";
-import styled, { createGlobalStyle } from "styled-components";
-import { Layout } from "antd";
+import styled from "styled-components";
 import io from "socket.io-client";
+
 import { set } from "lodash";
 
+import { Layout } from "antd";
 const { Content, Header } = Layout;
 
 import { errorTypes, socketActions, socketAddress } from "../common/constants";
-import { getSameFollowersList } from "../common/api";
+import { getSameFollowers } from "../common/api";
 
-import HeaderContent from "./Header";
+import GlobalStyles from "../common/globalStyles";
+import HeaderContent from "../common/components/Header";
 import Main from "./Main";
-
-const GlobalStyles = createGlobalStyle`
-  body {
-    margin: 0;
-  }
-`;
 
 const SContent = styled(Content)`
   margin: 0 auto;
@@ -27,13 +23,18 @@ const SContent = styled(Content)`
 `;
 
 const initialState = {
-  result: undefined,
+  sameFollowers: undefined,
   totalFollowers: [],
   currentProgress: [0, 0],
-  count: undefined,
+  pageNumber: 1,
+  total: undefined,
+  searchCount: undefined,
   users: [],
-  errors: null,
+  search: "",
+  errors: undefined,
+  resultId: undefined,
 
+  parsing: false,
   loading: false
 };
 
@@ -67,7 +68,6 @@ class App extends React.Component {
     this.socket = io(socketAddress);
 
     this.socket.on(socketActions.check, users => {
-      console.log("check", users);
       const usersWithError = getUsersWithError(users);
 
       if (usersWithError.length > 0) {
@@ -83,67 +83,71 @@ class App extends React.Component {
     });
 
     this.socket.on(socketActions.progress, response => {
-      const { name, followersProgress } = response;
+      const { name, followers_progress } = response;
       const index = this.state.users.findIndex(user => user === name);
 
       this.setState(prevState => ({
         currentProgress: set(
           prevState.currentProgress,
           `${index}.progress`,
-          followersProgress
+          followers_progress
         )
       }));
     });
 
-    // todo: get result from rest api, not socket
-    //  socket should return id for request
-    this.socket.on(socketActions.end, result => {
+    this.socket.on(socketActions.end, id => {
       this.socket.close();
 
-      console.log(result);
-
-      this.setState({
-        result: result.users,
-        count: result.count,
-        loading: false
-      });
-
-      // getSameFollowersList(id)
-      //   .then(result => result.json())
-      //   .then(result =>
-      //     this.setState({
-      //       result: result.users,
-      //       count: result.count,
-      //       loading: false
-      //     })
-      //   );
+      getSameFollowers(id)
+        .then(result => result.json())
+        .then(result =>
+          this.setState({
+            sameFollowers: result.common_followers,
+            resultId: id,
+            total: result.count,
+            searchCount: result.count,
+            parsing: false
+          })
+        )
+        .catch(err => {
+          this.setState({});
+        });
     });
+
+    this.socket.on("error", error => console.log(error));
   }
 
   render() {
     const {
       totalFollowers,
+      parsing,
       loading,
       currentProgress,
-      result,
+      sameFollowers,
       users,
-      count,
+      total,
+      pageNumber,
       errors
     } = this.state;
+
     return (
       <Layout>
         <GlobalStyles />
         <Header>
-          <HeaderContent />
+          <HeaderContent title="Instagram comparer" />
         </Header>
         <SContent>
           <Main
-            count={count}
+            total={total}
             errors={errors}
-            result={result}
+            sameFollowers={sameFollowers}
             users={users}
+            onTablePageChange={this.onTablePageChange}
+            onSearchInTable={this.onSearchInTable}
+            parsing={parsing}
             loading={loading}
             totalFollowers={totalFollowers}
+            pageNumber={pageNumber}
             currentProgress={currentProgress}
             onSearchClick={this.onSearchClick}
           />
@@ -152,12 +156,41 @@ class App extends React.Component {
     );
   }
 
+  onSearchInTable = value => {
+    this.setState({ loading: true, pageNumber: 1 });
+    getSameFollowers(this.state.resultId, { search: value })
+      .then(result => result.json())
+      .then(result => {
+        this.setState({
+          sameFollowers: result.common_followers,
+          searchCount: result.count,
+          search: value,
+          loading: false
+        });
+      });
+  };
+
+  onTablePageChange = (pageNumber, pageSize) => {
+    const { resultId } = this.state;
+
+    this.setState({ loading: true });
+    getSameFollowers(resultId, { p: pageNumber, search: this.state.search })
+      .then(result => result.json())
+      .then(result => {
+        this.setState({
+          pageNumber,
+          sameFollowers: result.common_followers,
+          loading: false
+        });
+      });
+  };
+
   onSearchClick = users => {
     this.setState({
       ...initialState,
       users,
       currentProgress: users.map(user => ({ name: user, progress: 0 })),
-      loading: true
+      parsing: true
     });
 
     this.initSocket();

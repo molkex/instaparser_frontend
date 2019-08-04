@@ -1,23 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import {
-  Button,
-  Card,
-  Col,
-  Input,
-  Row,
-  Typography,
-  Spin,
-  Form,
-  Collapse
-} from "antd";
+import { Button, Card, Col, Input, Row, Typography, Spin, Form } from "antd";
 const { Title } = Typography;
-const { Panel } = Collapse;
 import { values } from "lodash";
 
-import Table from "./Table";
 import Loader from "./Loader/Loader";
 import Error from "./Error";
+import Result from "./Result";
 
 const SWrapper = styled.div`
   background: #fff;
@@ -66,22 +55,27 @@ const cards = [
 class Main extends React.Component {
   render() {
     const {
-      result,
+      sameFollowers,
       totalFollowers,
       loading,
+      parsing,
       currentProgress,
       users,
       errors,
-      count
+      total,
+      onSearchInTable,
+      pageNumber,
+      onTablePageChange,
+      form
     } = this.props;
-    const { getFieldDecorator } = this.props.form;
+    const { getFieldDecorator } = form;
 
     return (
       <SWrapper>
         <SHeader level={2}>
           Поиск одинаковых подписчиков у пользователей Instagram
         </SHeader>
-        <Spin size="large" spinning={this.props.loading}>
+        <Spin size="large" spinning={parsing}>
           <Form onSubmit={this.handleSubmit}>
             <Row gutter={48}>
               {cards.map((card, index) => (
@@ -109,15 +103,23 @@ class Main extends React.Component {
           </Form>
         </Spin>
         <SResultContainer>
-          {loading && (
+          {parsing && (
             <Loader
               users={users}
               totalFollowers={totalFollowers}
               currentProgress={currentProgress}
             />
           )}
-          {count !== undefined && (
-            <Result users={users} count={count} result={result} />
+          {total !== undefined && (
+            <Result
+              pageNumber={pageNumber}
+              onSearchInTable={onSearchInTable}
+              onTablePageChange={onTablePageChange}
+              loading={loading}
+              users={users}
+              total={total}
+              sameFollowers={sameFollowers}
+            />
           )}
           {errors && <Error errors={errors} />}
         </SResultContainer>
@@ -134,22 +136,6 @@ class Main extends React.Component {
       }
     });
   };
-}
-
-function Result({ users, count, result }) {
-  return (
-    <React.Fragment>
-      <Title level={3}>
-        У пользователей @{users[0]} и @{users[1]} найдено {count} общих
-        подписчиков
-      </Title>
-      <Collapse >
-        <Panel header="Показать список общих подписчков">
-          <Table data={result} />
-        </Panel>
-      </Collapse>
-    </React.Fragment>
-  );
 }
 
 export default Form.create({})(Main);

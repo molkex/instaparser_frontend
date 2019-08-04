@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Col, Row, Spin, Typography } from "antd";
+import { Alert, Col, Row, Spin, Typography } from "antd";
 const { Title } = Typography;
 
 import LoadProgress from "./LoadProgress";
@@ -36,6 +36,11 @@ class Loader extends React.Component {
                 </Col>
               ))}
             </Row>
+            <Alert
+              closable
+              message="Поиск время от времени может приостанавливаться, это нормально."
+              type="warning"
+            />
           </React.Fragment>
         ) : (
           <React.Fragment>
