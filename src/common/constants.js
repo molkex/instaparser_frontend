@@ -18,3 +18,5 @@ export const errorTypes = {
   userPrivate: "UserIsPrivate",
   userTooManyFollowers: "UserTooManyFollowers"
 };
+
+export const tablePageSize = 15;

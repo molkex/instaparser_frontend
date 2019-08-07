@@ -6,6 +6,7 @@ const { Search } = Input;
 const { Title } = Typography;
 
 import FollowersTable from "./FollowersTable";
+import SearchHeader from "../common/components/SearchHeader";
 
 const SSearchWrapper = styled.div`
   margin-bottom: 12px;
@@ -18,13 +19,13 @@ class Result extends React.Component {
     const {
       users,
       total,
+      searchCount,
       sameFollowers,
       onTablePageChange,
       pageNumber,
       loading,
       onSearchInTable
     } = this.props;
-    const { searchVal } = this.state;
 
     return (
       <React.Fragment>
@@ -36,28 +37,17 @@ class Result extends React.Component {
           <Collapse>
             <Panel header="Показать список общих подписчков">
               <SSearchWrapper>
-                <Row gutter={16}>
-                  <Col xs={20} md={12} xl={8}>
-                    <Search
-                      enterButton
-                      value={searchVal}
-                      onChange={e =>
-                        this.setState({ searchVal: e.currentTarget.value })
-                      }
-                      placeholder="Введите имя пользователя для поиска"
-                      onSearch={onSearchInTable}
-                    />
-                  </Col>
-                  <Col xs={4} md={12} xl={16}>
-                    <Button onClick={this.onResetClick}>Сброс</Button>
-                  </Col>
-                </Row>
+                <SearchHeader
+                  prefix="@"
+                  onSearch={onSearchInTable}
+                  onResetClick={this.onResetClick}
+                />
               </SSearchWrapper>
               <FollowersTable
                 loading={loading}
                 pageNumber={pageNumber}
                 onTablePageChange={onTablePageChange}
-                total={total}
+                total={searchCount}
                 data={sameFollowers}
               />
             </Panel>
@@ -68,7 +58,7 @@ class Result extends React.Component {
   }
 
   onResetClick = () => {
-    this.setState({ searchVal: "" }, () => this.props.onSearchInTable(""));
+    this.props.onSearchInTable("");
   };
 }
 

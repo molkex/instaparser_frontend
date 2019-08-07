@@ -19,7 +19,7 @@ class Error extends React.Component {
               <Card
                 headStyle={{ backgroundColor: "#f5222d", color: "#fff" }}
                 size="small"
-                title="При парсинге произошла ошибка!"
+                title="При сканировании произошла ошибка!"
               >
                 <Text level={4}>{error}</Text>
               </Card>

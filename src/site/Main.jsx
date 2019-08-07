@@ -63,6 +63,7 @@ class Main extends React.Component {
       users,
       errors,
       total,
+      searchCount,
       onSearchInTable,
       pageNumber,
       onTablePageChange,
@@ -118,6 +119,7 @@ class Main extends React.Component {
               loading={loading}
               users={users}
               total={total}
+              searchCount={searchCount}
               sameFollowers={sameFollowers}
             />
           )}

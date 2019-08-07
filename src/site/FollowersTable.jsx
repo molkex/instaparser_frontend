@@ -2,6 +2,7 @@ import React from "react";
 import { Input, Table as ATable } from "antd";
 
 import { getInstagramUserUrl } from "../common/utils";
+import {tablePageSize} from '../common/constants';
 
 const columns = [
   {
@@ -34,7 +35,7 @@ class FollowersTable extends React.Component {
         pagination={{
           hideOnSinglePage: true,
           total: total,
-          pageSize: 15,
+          pageSize: tablePageSize,
           current: pageNumber,
           onChange: onTablePageChange
         }}

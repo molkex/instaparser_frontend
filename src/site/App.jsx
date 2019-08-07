@@ -50,14 +50,14 @@ function getUsersWithError(users) {
 }
 
 function getError(user) {
-  const { error, username } = user;
+  const { error, username, limit } = user;
 
   if (error === errorTypes.userNotFound) {
     return `Пользователь @${username} не найден`;
   } else if (error === errorTypes.userPrivate) {
     return `Профиль пользователя @${username} является приватным`;
   } else if (error === errorTypes.userTooManyFollowers) {
-    return `У пользователя @${username} слишком много подписчков`;
+    return `У пользователя @${username} слишком много подписчков. Максимальное количество доступное для сканирования ${limit} подписчиков`;
   }
 }
 
@@ -72,12 +72,12 @@ class App extends React.Component {
 
       if (usersWithError.length > 0) {
         const errors = usersWithError.map(user => getError(user));
-        this.setState({ errors, loading: false });
+        this.setState({ errors, parsing: false });
 
         this.socket.close();
       } else {
         this.setState({
-          totalFollowers: users.map(user => user.totalFollowers)
+          totalFollowers: users.map(user => user.total_followers)
         });
       }
     });
@@ -126,6 +126,7 @@ class App extends React.Component {
       sameFollowers,
       users,
       total,
+      searchCount,
       pageNumber,
       errors
     } = this.state;
@@ -142,6 +143,7 @@ class App extends React.Component {
             errors={errors}
             sameFollowers={sameFollowers}
             users={users}
+            searchCount={searchCount}
             onTablePageChange={this.onTablePageChange}
             onSearchInTable={this.onSearchInTable}
             parsing={parsing}
