@@ -14,11 +14,9 @@ const SButton = styled(Button)`
 
 class SearchHeader extends React.Component {
   static defaultProps = { prefix: "" };
-  state = { value: "" };
 
   render() {
-    const { value } = this.state;
-    const { onSearch, prefix } = this.props;
+    const { onSearch, prefix, onChange, value, onResetClick } = this.props;
 
     return (
       <SWrapper>
@@ -26,20 +24,14 @@ class SearchHeader extends React.Component {
           prefix={prefix}
           enterButton
           value={value}
-          onChange={e => this.setState({ value: e.currentTarget.value })}
+          onChange={e => onChange(e.currentTarget.value)}
           placeholder="Введите имя пользователя для поиска"
           onSearch={() => onSearch(this.state.value)}
         />
-        <SButton onClick={this.onResetClick}>Сброс</SButton>
+        <SButton onClick={onResetClick}>Сброс</SButton>
       </SWrapper>
     );
   }
-
-  onResetClick = () => {
-    this.setState({ value: "" }, () => {
-      this.props.onResetClick();
-    });
-  };
 }
 
 export default SearchHeader;

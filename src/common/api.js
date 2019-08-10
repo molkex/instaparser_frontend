@@ -113,6 +113,10 @@ export function removeAccount(id) {
   return fetch(`${apiPrefix}/account/${id}/remove`);
 }
 
+export function checkAccount(id) {
+  return fetch(`${apiPrefix}/account/${id}/check`);
+}
+
 // login
 export function login(username, password) {
   return fetch(`${apiPrefix}/login`, {

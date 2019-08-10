@@ -4,44 +4,42 @@ import {
   Button,
   Form,
   Icon,
-  Input,
   Modal,
   Popconfirm,
   Table,
   message,
   Typography
 } from "antd";
-import {
-  createAccount,
-  editAccount,
-  getAccounts,
-  removeAccount
-} from "../common/api";
-import { checkResponse, errorHandler } from "../common/utils";
-import { tablePageSize } from "../common/constants";
-import CreateAccountForm from "./AddAccountModal";
 const { Title } = Typography;
 
-const EditableContext = React.createContext();
+import { editAccount, getAccounts, removeAccount } from "../common/api";
+import { AccountTableContext, getAccountsDiff } from "./utils";
+import { checkResponse, errorHandler } from "../common/utils";
+import { tablePageSize } from "../common/constants";
+
+import CreateAccountForm from "./addAccountModal";
+import AccountStatus from "./AccountStatus";
+import EditableCell from "./EditableCell";
 
 const STitleWrapper = styled.div`
   display: flex;
   justify-content: space-between;
 `;
 
-// todo: декомпозиция компонента
 class AccountsTable extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
       accountsData: [],
-      createAccountModalVisible: false,
       editingId: "",
       pageNumber: 1,
       total: 0,
-      loading: true
+      loading: true,
+
+      createAccountModalVisible: false
     };
+
     this.columns = [
       {
         title: "Логин",
@@ -54,14 +52,24 @@ class AccountsTable extends React.Component {
         dataIndex: "password"
       },
       {
+        title: "Статус",
+        width: "250px",
+        editable: false,
+        dataIndex: "status",
+        render: (text, record) => (
+          <AccountStatus error={record.error} checkpoint={record.checkpoint} />
+        )
+      },
+      {
         title: "",
         dataIndex: "operation",
+        width: "200px",
         render: (text, record) => {
           const { editingId } = this.state;
           const editable = this.isEditing(record);
           return editable ? (
             <span>
-              <EditableContext.Consumer>
+              <AccountTableContext.Consumer>
                 {form => (
                   <a
                     href="javascript:;"
@@ -71,7 +79,7 @@ class AccountsTable extends React.Component {
                     Сохранить
                   </a>
                 )}
-              </EditableContext.Consumer>
+              </AccountTableContext.Consumer>
               <Popconfirm
                 title="Отменить редактирование?"
                 onConfirm={() => this.cancel(record.id)}
@@ -124,24 +132,6 @@ class AccountsTable extends React.Component {
     this.setState({ editingId: "" });
   };
 
-  getAccountsDiff(oldAccountInfo, newAccountInfo) {
-    const result = { id: oldAccountInfo.id };
-    let count = 0;
-
-    if (oldAccountInfo.username !== newAccountInfo.username) {
-      result.username = newAccountInfo.username;
-      count++;
-    }
-
-    if (oldAccountInfo.password !== newAccountInfo.password) {
-      result.password = newAccountInfo.password;
-      count++;
-    }
-
-    if (count === 0) return null;
-    return result;
-  }
-
   save(form, id) {
     form.validateFields((error, row) => {
       if (error) {
@@ -155,17 +145,32 @@ class AccountsTable extends React.Component {
         const item = newData[index];
         const newItem = { ...item, ...row };
 
-        const accountDiff = this.getAccountsDiff(item, row);
+        const accountDiff = getAccountsDiff(item, row);
         if (accountDiff) {
-          editAccount(accountDiff)
+          this.setState({ loading: true });
+          editAccount(newItem)
             .then(response => {
-              checkResponse(response);
-              newData[index] = newItem;
-              this.setState({ accountsData: newData, editingId: "" });
+              return response.json();
             })
-            .catch(err =>
-              errorHandler(err, "Во время редактирования произошла ошибка!")
-            );
+            .then(result => {
+              if (result.error === "") {
+                this.setState({
+                  editingId: ""
+                });
+              }
+
+              newItem.error = result.error;
+              newData[index] = newItem;
+              this.setState({
+                accountsData: newData
+              });
+            })
+            .catch(err => {
+              errorHandler(err, "Во время редактирования произошла ошибка!");
+            })
+            .finally(() => {
+              this.setState({ loading: false });
+            });
         }
       }
     });
@@ -212,14 +217,17 @@ class AccountsTable extends React.Component {
     });
 
     return (
-      <EditableContext.Provider value={this.props.form}>
+      <AccountTableContext.Provider value={this.props.form}>
         <Modal
           title="Добавить аккаунт"
           footer={false}
           visible={this.state.createAccountModalVisible}
           onCancel={this.hideCreateAccountModal}
         >
-          <CreateAccountForm onCreateBtnClick={this.createAccount} />
+          <CreateAccountForm
+            onSuccess={this.onCreateAccountSuccess}
+            onCancel={this.hideCreateAccountModal}
+          />
         </Modal>
         <Table
           components={components}
@@ -243,30 +251,9 @@ class AccountsTable extends React.Component {
           dataSource={accountsData}
           rowKey="id"
         />
-      </EditableContext.Provider>
+      </AccountTableContext.Provider>
     );
   }
-
-  createAccount = accountInfo => {
-    createAccount(accountInfo)
-      .then(response => {
-        checkResponse(response);
-        return response.json();
-      })
-      .then(result => {
-        this.hideCreateAccountModal();
-        this.setState(prevState => ({
-          accountsData: prevState.accountsData.concat({
-            id: result.id,
-            ...accountInfo
-          })
-        }));
-        message.success("Аккаунт успешно добавлен!");
-      })
-      .catch(err =>
-        errorHandler(err, "При добавлении пользователя произошла ошибка")
-      );
-  };
 
   showCreateAccountModal = () => {
     this.setState({ createAccountModalVisible: true });
@@ -281,45 +268,18 @@ class AccountsTable extends React.Component {
       this.getAccounts();
     });
   };
-}
 
-class EditableCell extends React.Component {
-  renderCell = ({ getFieldDecorator }) => {
-    const {
-      editing,
-      dataIndex,
-      title,
-      record,
-      index,
-      children,
-      ...restProps
-    } = this.props;
-    return (
-      <td {...restProps}>
-        {editing ? (
-          <Form.Item style={{ margin: 0 }}>
-            {getFieldDecorator(dataIndex, {
-              rules: [
-                {
-                  required: true,
-                  message: `Пожалуйста, заполните поле`
-                }
-              ],
-              initialValue: record[dataIndex]
-            })(<Input />)}
-          </Form.Item>
-        ) : (
-          children
-        )}
-      </td>
-    );
+  onCreateAccountSuccess = (id, accountInfo) => {
+    this.setState(prevState => ({
+      accountsData: prevState.accountsData.concat({
+        id: id,
+        ...accountInfo
+      })
+    }));
+
+    this.hideCreateAccountModal();
+    message.success("Аккаунт успешно добавлен!");
   };
-
-  render() {
-    return (
-      <EditableContext.Consumer>{this.renderCell}</EditableContext.Consumer>
-    );
-  }
 }
 
 const EditableAccountsTable = Form.create()(AccountsTable);

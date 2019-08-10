@@ -13,7 +13,7 @@ const SSearchWrapper = styled.div`
 `;
 
 class Result extends React.Component {
-  state = { searchVal: "" };
+  state = { searchValue: "" };
 
   render() {
     const {
@@ -26,6 +26,7 @@ class Result extends React.Component {
       loading,
       onSearchInTable
     } = this.props;
+    const { searchValue } = this.state;
 
     return (
       <React.Fragment>
@@ -41,6 +42,8 @@ class Result extends React.Component {
                   prefix="@"
                   onSearch={onSearchInTable}
                   onResetClick={this.onResetClick}
+                  value={searchValue}
+                  onChange={this.onInputSearchChange}
                 />
               </SSearchWrapper>
               <FollowersTable
@@ -58,8 +61,11 @@ class Result extends React.Component {
   }
 
   onResetClick = () => {
+    this.setState({ searchValue: "" });
     this.props.onSearchInTable("");
   };
+
+  onInputSearchChange = searchValue => this.setState({ searchValue });
 }
 
 export default Result;

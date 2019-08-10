@@ -19,4 +19,13 @@ export const errorTypes = {
   userTooManyFollowers: "UserTooManyFollowers"
 };
 
+export const accountErrorTypes= {
+  wrongLogin: "WrongUsername",
+  wrongPassword: "WrongPassword",
+  needConfirmation: "CheckpointRequired",
+  accountFlagged: "FlaggedForSpam"
+};
+
 export const tablePageSize = 15;
+
+export const dataKey = "searchId";

@@ -14,6 +14,12 @@ import { getSameFollowers } from "../common/api";
 import GlobalStyles from "../common/globalStyles";
 import HeaderContent from "../common/components/Header";
 import Main from "./Main";
+import { getSearchQuery, validateQuery } from "./utils";
+import {
+  clearSearchId,
+  getSearchIdFromStorage,
+  saveSearchId
+} from "../common/storage";
 
 const SContent = styled(Content)`
   margin: 0 auto;
@@ -64,10 +70,54 @@ function getError(user) {
 class App extends React.Component {
   state = initialState;
 
+  componentDidMount() {
+    const searchIdFromQuery = getSearchQuery();
+    const searchIdFromStorage = getSearchIdFromStorage();
+
+    if (searchIdFromQuery && validateQuery(searchIdFromQuery)) {
+      this.setState({ parsing: true });
+      this.getSameFollowers(searchIdFromQuery);
+    } else if (searchIdFromStorage) {
+      this.setState({ parsing: true });
+      this.getSameFollowers(searchIdFromStorage);
+    }
+  }
+
+  getSameFollowers(id) {
+    return getSameFollowers(id)
+      .then(result => result.json())
+      .then(result => {
+        if (result.count !== 0) {
+          this.setState({
+            sameFollowers: result.common_followers,
+            resultId: id,
+            users: result.compared_users,
+            total: result.count,
+            searchCount: result.count,
+            parsing: false
+          });
+          clearSearchId();
+        } else {
+          this.setState({
+            parsing: false,
+            errors: ["Сканирование данных аккаунтов ещё не завершено"]
+          });
+        }
+      })
+      .catch(err => {
+        this.setState({
+          errors: ["Сканирования с таким номером не найдено"],
+          parsing: false
+        });
+      });
+  }
+
   initSocket() {
     this.socket = io(socketAddress);
 
-    this.socket.on(socketActions.check, users => {
+    this.socket.on(socketActions.check, result => {
+      const { users, id } = result;
+      saveSearchId(id);
       const usersWithError = getUsersWithError(users);
 
       if (usersWithError.length > 0) {
@@ -97,6 +147,7 @@ class App extends React.Component {
 
     this.socket.on(socketActions.end, id => {
       this.socket.close();
+      clearSearchId();
 
       getSameFollowers(id)
         .then(result => result.json())
@@ -110,11 +161,15 @@ class App extends React.Component {
           })
         )
         .catch(err => {
-          this.setState({});
+          this.setState({ errors: [""] });
         });
     });
 
-    this.socket.on("error", error => console.log(error));
+    this.socket.on("error", error => {
+      this.socket.close();
+      this.setState({ errors: [error] });
+      console.log(error);
+    });
   }
 
   render() {

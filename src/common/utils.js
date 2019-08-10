@@ -1,5 +1,6 @@
-import { instagramUrl } from "./constants";
 import { message } from "antd";
+
+import { instagramUrl } from "./constants";
 
 export function getInstagramUserUrl(username) {
   return `${instagramUrl}/${username}`;
