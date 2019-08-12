@@ -75,7 +75,7 @@ class App extends React.Component {
           searchId: id
         });
 
-        if (result.count !== 0) {
+        if (result.count !== null) {
           this.setState({
             sameFollowers: result.common_followers,
             total: result.count,

@@ -26,7 +26,7 @@ class SearchHeader extends React.Component {
           value={value}
           onChange={e => onChange(e.currentTarget.value)}
           placeholder="Введите имя пользователя для поиска"
-          onSearch={() => onSearch(this.state.value)}
+          onSearch={() => onSearch(value)}
         />
         <SButton onClick={onResetClick}>Сброс</SButton>
       </SWrapper>

@@ -17,12 +17,13 @@ const SBackground = styled.div`
   position: absolute;
   top: -${props => Math.min(props.count * 5, backgroundHeight - offset)}px;
   left: 0;
-  background: rgb(241, 248, 233);
+  background: rgb(227, 242, 253);
   background: linear-gradient(
     180deg,
-    rgba(241, 248, 233, 1) 0%,
-    rgba(76, 175, 80, 1) 50%,
-    rgba(27, 94, 32, 1) 100%
+    rgba(227, 242, 253, 1) 0%,
+    rgba(66, 165, 245, 1) 33%,
+    rgba(239, 83, 80, 1) 66%,
+    rgba(244, 67, 54, 1) 100%
   );
   z-index: 0;
 `;
@@ -76,16 +77,15 @@ class HistoryTable extends React.Component {
       {
         title: "Дата поиска",
         dataIndex: "creation_time",
-        render: date => moment(date).format("DD.MM.YY hh:mm:ss")
+        render: date => moment(date).utcOffset(8).format("DD.MM.YY HH:mm")
       },
       {
         title: "Сравниваемые пользователи",
         dataIndex: "compared_users",
         render: users =>
           users.map((user, index) => (
-            <React.Fragment>
+            <React.Fragment key={index}>
               <Tooltip
-                key={index}
                 title={`${user.count} ${getWordEndSuffixFromNumber(
                   "сканирован",
                   user.count
@@ -111,7 +111,8 @@ class HistoryTable extends React.Component {
       },
       {
         title: "Количество совпавших подписчков",
-        dataIndex: "count"
+        dataIndex: "count",
+        render: (text, record) => text === null ? "Сканирование..." : text
       }
     ];
   }
