@@ -25,6 +25,7 @@ import {
 import GlobalStyles from "../common/globalStyles";
 import HeaderContent from "../common/components/Header";
 import Main from "./Main";
+import { checkResponse } from "../common/utils";
 
 const SContent = styled(Content)`
   margin: 0 auto;
@@ -67,7 +68,10 @@ class App extends React.Component {
 
   getSameFollowers(id) {
     return getSameFollowers(id)
-      .then(response => response.json())
+      .then(response => {
+        checkResponse();
+        return response.json();
+      })
       .then(result => {
         const comparedUsers = result.compared_users;
         this.setState({
@@ -96,10 +100,12 @@ class App extends React.Component {
         }
       })
       .catch(err => {
+        console.log(err);
         this.setState({
-          errors: ["Сканирования с таким номером не найдено"],
+          errors: ["Произошла непредвиденная ошибка"],
           parsing: false
         });
+        clearSearchId();
       });
   }
 

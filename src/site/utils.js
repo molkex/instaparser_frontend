@@ -12,7 +12,7 @@ export function validateQuery(query) {
 }
 
 function checkUser(user) {
-  return user.error === "";
+  return user.error === "" || user.error === undefined;
 }
 
 export function getUsersWithError(users) {
