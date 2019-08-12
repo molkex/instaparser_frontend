@@ -28,7 +28,7 @@ export function getErrorMessage(error, checkpoint) {
   } else if (error === accountErrorTypes.wrongPassword) {
     return "Неправильный пароль";
   } else if (error === accountErrorTypes.accountFlagged) {
-    return "Аккаунт помечен как спам-аккаунт"
+    return "Аккаунт помечен как спам-аккаунт";
   } else if (error === accountErrorTypes.needConfirmation) {
     return (
       <React.Fragment>
@@ -45,4 +45,17 @@ export function getErrorMessage(error, checkpoint) {
   } else {
     return "Произошла неизвестная ошибка";
   }
+}
+
+export function getWordEndSuffixFromNumber(word, number) {
+  let suffix = "";
+  if (number === 1) {
+    suffix = "ие";
+  } else if (number >= 2 && number <= 4) {
+    suffix = "ия";
+  } else if (number === 0 || number >= 5) {
+    suffix = "ий";
+  } 
+  
+  return word + suffix;
 }

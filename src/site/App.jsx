@@ -8,18 +8,23 @@ import { set } from "lodash";
 import { Layout } from "antd";
 const { Content, Header } = Layout;
 
-import { errorTypes, socketActions, socketAddress } from "../common/constants";
-import { getSameFollowers } from "../common/api";
-
-import GlobalStyles from "../common/globalStyles";
-import HeaderContent from "../common/components/Header";
-import Main from "./Main";
-import { getSearchQuery, validateQuery } from "./utils";
+import { socketActions, socketAddress } from "../common/constants";
+import { getSameFollowers, startComparing } from "../common/api";
+import {
+  getError,
+  getSearchQuery,
+  getUsersWithError,
+  validateQuery
+} from "./utils";
 import {
   clearSearchId,
   getSearchIdFromStorage,
   saveSearchId
 } from "../common/storage";
+
+import GlobalStyles from "../common/globalStyles";
+import HeaderContent from "../common/components/Header";
+import Main from "./Main";
 
 const SContent = styled(Content)`
   margin: 0 auto;
@@ -38,34 +43,11 @@ const initialState = {
   users: [],
   search: "",
   errors: undefined,
-  resultId: undefined,
+  searchId: undefined,
 
   parsing: false,
   loading: false
 };
-
-function checkUser(user) {
-  return user.error === "";
-}
-
-function getUsersWithError(users) {
-  return users.reduce(
-    (acc, user) => (checkUser(user) ? acc : acc.concat(user)),
-    []
-  );
-}
-
-function getError(user) {
-  const { error, username, limit } = user;
-
-  if (error === errorTypes.userNotFound) {
-    return `Пользователь @${username} не найден`;
-  } else if (error === errorTypes.userPrivate) {
-    return `Профиль пользователя @${username} является приватным`;
-  } else if (error === errorTypes.userTooManyFollowers) {
-    return `У пользователя @${username} слишком много подписчков. Максимальное количество доступное для сканирования ${limit} подписчиков`;
-  }
-}
 
 class App extends React.Component {
   state = initialState;
@@ -85,13 +67,17 @@ class App extends React.Component {
 
   getSameFollowers(id) {
     return getSameFollowers(id)
-      .then(result => result.json())
+      .then(response => response.json())
       .then(result => {
+        const comparedUsers = result.compared_users;
+        this.setState({
+          users: comparedUsers.map(user => user.username),
+          searchId: id
+        });
+
         if (result.count !== 0) {
           this.setState({
             sameFollowers: result.common_followers,
-            resultId: id,
-            users: result.compared_users,
             total: result.count,
             searchCount: result.count,
             parsing: false
@@ -99,9 +85,14 @@ class App extends React.Component {
           clearSearchId();
         } else {
           this.setState({
-            parsing: false,
-            errors: ["Сканирование данных аккаунтов ещё не завершено"]
+            parsing: true,
+            currentProgress: comparedUsers.map(user => ({
+              name: user.username,
+              progress: 0
+            })),
+            totalFollowers: comparedUsers.map(user => user.total_followers)
           });
+          this.initSocket(id);
         }
       })
       .catch(err => {
@@ -112,25 +103,8 @@ class App extends React.Component {
       });
   }
 
-  initSocket() {
-    this.socket = io(socketAddress);
-
-    this.socket.on(socketActions.check, result => {
-      const { users, id } = result;
-      saveSearchId(id);
-      const usersWithError = getUsersWithError(users);
-
-      if (usersWithError.length > 0) {
-        const errors = usersWithError.map(user => getError(user));
-        this.setState({ errors, parsing: false });
-
-        this.socket.close();
-      } else {
-        this.setState({
-          totalFollowers: users.map(user => user.total_followers)
-        });
-      }
-    });
+  initSocket(id) {
+    this.socket = io(socketAddress, { query: { room_id: id } });
 
     this.socket.on(socketActions.progress, response => {
       const { name, followers_progress } = response;
@@ -154,14 +128,14 @@ class App extends React.Component {
         .then(result =>
           this.setState({
             sameFollowers: result.common_followers,
-            resultId: id,
+            searchId: id,
             total: result.count,
             searchCount: result.count,
             parsing: false
           })
         )
         .catch(err => {
-          this.setState({ errors: [""] });
+          this.setState({ errors: [err] });
         });
     });
 
@@ -182,6 +156,7 @@ class App extends React.Component {
       users,
       total,
       searchCount,
+      searchId,
       pageNumber,
       errors
     } = this.state;
@@ -194,6 +169,7 @@ class App extends React.Component {
         </Header>
         <SContent>
           <Main
+            searchId={searchId}
             total={total}
             errors={errors}
             sameFollowers={sameFollowers}
@@ -215,7 +191,7 @@ class App extends React.Component {
 
   onSearchInTable = value => {
     this.setState({ loading: true, pageNumber: 1 });
-    getSameFollowers(this.state.resultId, { search: value })
+    getSameFollowers(this.state.searchId, { search: value })
       .then(result => result.json())
       .then(result => {
         this.setState({
@@ -228,10 +204,10 @@ class App extends React.Component {
   };
 
   onTablePageChange = (pageNumber, pageSize) => {
-    const { resultId } = this.state;
+    const { searchId } = this.state;
 
     this.setState({ loading: true });
-    getSameFollowers(resultId, { p: pageNumber, search: this.state.search })
+    getSameFollowers(searchId, { p: pageNumber, search: this.state.search })
       .then(result => result.json())
       .then(result => {
         this.setState({
@@ -250,8 +226,26 @@ class App extends React.Component {
       parsing: true
     });
 
-    this.initSocket();
-    this.socket.emit(socketActions.search, users);
+    startComparing(users)
+      .then(response => {
+        return response.json();
+      })
+      .then(result => {
+        const { users, id } = result;
+        const usersWithError = getUsersWithError(users);
+
+        if (usersWithError.length > 0) {
+          const errors = usersWithError.map(user => getError(user));
+          this.setState({ errors, parsing: false });
+        } else {
+          saveSearchId(id);
+          this.initSocket(id);
+          this.setState({
+            searchId: id,
+            totalFollowers: users.map(user => user.total_followers)
+          });
+        }
+      });
   };
 }
 

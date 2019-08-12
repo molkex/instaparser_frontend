@@ -7,15 +7,49 @@ const { Title } = Typography;
 import { getStatistics } from "../common/api";
 import SearchHeader from "../common/components/SearchHeader";
 import { tablePageSize } from "../common/constants";
+import { getWordEndSuffixFromNumber } from "./utils";
+
+const backgroundHeight = 500;
+const offset = 14 * 1.5; // font-size * line-height
+const SBackground = styled.div`
+  width: 100%;
+  height: ${backgroundHeight}px;
+  position: absolute;
+  top: -${props => Math.min(props.count * 5, backgroundHeight - offset)}px;
+  left: 0;
+  background: rgb(241, 248, 233);
+  background: linear-gradient(
+    180deg,
+    rgba(241, 248, 233, 1) 0%,
+    rgba(76, 175, 80, 1) 50%,
+    rgba(27, 94, 32, 1) 100%
+  );
+  z-index: 0;
+`;
+
+const SWrapper = styled.div`
+  float: left;
+  height: 1.5em;
+  padding: 0 5px;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+`;
 
 const SLink = styled.a`
-  ${props =>
-    props.count &&
-    props.count > 0 &&
-    css`
-      background-color: #e1f5fe;
-    `}
+  position: relative;
+  z-index: 1;
 `;
+
+const SUsername = props => {
+  const { count, children, ...linkProps } = props;
+  return (
+    <SWrapper>
+      <SBackground count={count} />
+      <SLink {...linkProps}>{children}</SLink>
+    </SWrapper>
+  );
+};
 
 class HistoryTable extends React.Component {
   constructor(props) {
@@ -49,27 +83,30 @@ class HistoryTable extends React.Component {
         dataIndex: "compared_users",
         render: users =>
           users.map((user, index) => (
-            <Tooltip
-              key={index}
-              title={`${user.count || 0} ${
-                user.count > 4 || user.count < 1
-                  ? "сканирований"
-                  : "сканирования"
-              }`}
-            >
-              <SLink
-                count={user.count}
-                href="javascript:;"
-                onClick={() =>
-                  this.setState({ searchValue: user.username }, () =>
-                    this.getStatistics()
-                  )
-                }
+            <React.Fragment>
+              <Tooltip
+                key={index}
+                title={`${user.count} ${getWordEndSuffixFromNumber(
+                  "сканирован",
+                  user.count
+                )}`}
               >
-                @{user.username}
-              </SLink>
-              {index === users.length - 1 ? "" : ", "}
-            </Tooltip>
+                <SUsername
+                  count={user.count}
+                  href="javascript:;"
+                  onClick={() =>
+                    this.setState({ searchValue: user.username }, () =>
+                      this.getStatistics()
+                    )
+                  }
+                >
+                  @{user.username}
+                </SUsername>
+              </Tooltip>
+              <div style={{ float: "left", marginRight: "5px" }}>
+                {index === users.length - 1 ? "" : ", "}
+              </div>
+            </React.Fragment>
           ))
       },
       {

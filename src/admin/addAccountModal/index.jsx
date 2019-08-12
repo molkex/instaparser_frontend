@@ -29,7 +29,11 @@ class AddAccountModalContainer extends React.Component {
       })
       .then(result => {
         if (result.error === "") {
-          this.props.onSuccess(result.id, accountInfo);
+          this.props.onSuccess(result.id, {
+            ...accountInfo,
+            error: result.error,
+            checkpoint: result.checkpoint
+          });
         } else {
           this.setState({
             error: getErrorMessage(result.error, result.checkpoint)

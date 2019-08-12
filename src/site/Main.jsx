@@ -1,12 +1,14 @@
 import React from "react";
 import styled from "styled-components";
 import { Button, Card, Col, Input, Row, Typography, Spin, Form } from "antd";
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 import { values } from "lodash";
 
 import Loader from "./Loader/Loader";
 import Error from "./Error";
 import Result from "./Result";
+import { createSearchUrlFromId } from "./utils";
+import SearchLink from "./SearchLink";
 
 const SWrapper = styled.div`
   background: #fff;
@@ -58,6 +60,7 @@ class Main extends React.Component {
       sameFollowers,
       totalFollowers,
       loading,
+      searchId,
       parsing,
       currentProgress,
       users,
@@ -104,6 +107,7 @@ class Main extends React.Component {
           </Form>
         </Spin>
         <SResultContainer>
+          <SearchLink searchId={searchId} />
           {parsing && (
             <Loader
               users={users}

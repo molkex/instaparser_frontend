@@ -44,6 +44,11 @@ function getQueryStr(query) {
 }
 
 //main
+export function startComparing(query) {
+  const queryStr = getQueryStr(query);
+  return fetch(`${apiPrefix}/compare${queryStr}`);
+}
+
 export function getSameFollowers(id, query = {}) {
   const queryStr = getQueryStr(query);
   return fetch(`${apiPrefix}/stats/${id}/commonfollowers${queryStr}`);
