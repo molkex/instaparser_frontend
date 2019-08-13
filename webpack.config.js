@@ -4,6 +4,15 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
 
+const API_URL = {
+  production: JSON.stringify(""),
+  development: JSON.stringify("http://5.189.102.24")
+};
+
+// check environment mode
+const environment =
+  process.env.NODE_ENV === "production" ? "production" : "development";
+
 module.exports = {
   entry: {
     main: "./src/site/entry.js",
@@ -114,6 +123,9 @@ module.exports = {
       template: "./login.html",
       filename: "login.html",
       chunks: ["login"]
+    }),
+    new webpack.DefinePlugin({
+      API_URL: API_URL[environment]
     }),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
     //new BundleAnalyzerPlugin()

@@ -1,6 +1,6 @@
 //const port = 3000;
 //export const prefix = `http://localhost:${port}`;
-export const prefix = `http://5.189.102.24`;
+export const prefix = API_URL;
 export const apiPrefix = prefix + "/api";
 export const socketAddress = prefix;
 
