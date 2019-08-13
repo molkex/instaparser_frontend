@@ -35,5 +35,5 @@ export function getError(user) {
 }
 
 export function createSearchUrlFromId(id) {
-  return `${prefix}/?${id}`;
+  return `${window.location.origin}/?${id}`;
 }
