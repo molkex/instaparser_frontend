@@ -62,14 +62,16 @@ class App extends React.Component {
       this.getSameFollowers(searchIdFromQuery);
     } else if (searchIdFromStorage) {
       this.setState({ parsing: true });
-      this.getSameFollowers(searchIdFromStorage);
+      this.getSameFollowers(searchIdFromStorage).then(err => {
+        if (!err && !this.state.parsing) clearSearchId();
+      });
     }
   }
 
   getSameFollowers(id) {
     return getSameFollowers(id)
       .then(response => {
-        checkResponse();
+        checkResponse(response);
         return response.json();
       })
       .then(result => {
@@ -86,7 +88,6 @@ class App extends React.Component {
             searchCount: result.count,
             parsing: false
           });
-          clearSearchId();
         } else {
           this.setState({
             parsing: true,
@@ -106,6 +107,7 @@ class App extends React.Component {
           parsing: false
         });
         clearSearchId();
+        return err;
       });
   }
 
