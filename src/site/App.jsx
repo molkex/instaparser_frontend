@@ -149,7 +149,6 @@ class App extends React.Component {
 
     this.socket.on("error", error => {
       this.socket.close();
-      this.setState({ errors: [error] });
       console.log(error);
     });
   }
