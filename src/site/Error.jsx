@@ -21,7 +21,7 @@ class Error extends React.Component {
                 size="small"
                 title="При сканировании произошла ошибка!"
               >
-                <Text level={4}>{error}</Text>
+                <Text level={4}>{error.toString()}</Text>
               </Card>
             </SWrapper>
           </Col>
